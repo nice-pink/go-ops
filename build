@@ -1,0 +1,11 @@
+#!/bin/bash
+
+module=$1
+
+# create output dir if not already exists
+mkdir -p bin/
+
+# build module and output to $REPO/bin/
+echo "Build $module..."
+cd cmd/$module
+go build -o ../../bin/
