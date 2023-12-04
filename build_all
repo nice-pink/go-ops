@@ -1,0 +1,8 @@
+#!/bin/bash
+
+mkdir -p bin/
+rm -rf bin/*
+
+./build request
+
+cd ..

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# e.g. request
+target=$1
+
+docker-build-push -i go-ops -p nicepink -r docker -t $target

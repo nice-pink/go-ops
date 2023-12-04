@@ -8,4 +8,4 @@ mkdir -p bin/
 # build module and output to $REPO/bin/
 echo "Build $module..."
 cd cmd/$module
-go build -o ../../bin/
+go build -o ../../bin/ .
