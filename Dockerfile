@@ -25,7 +25,7 @@ ENTRYPOINT [ "/request" ]
 
 ####################################################################################################
 
-FROM cgr.dev/chainguard/glibc-dynamic:latest
+FROM cgr.dev/chainguard/glibc-dynamic:latest AS all
 
 COPY --from=builder /app/bin/* .
 
