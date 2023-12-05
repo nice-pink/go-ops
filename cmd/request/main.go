@@ -32,6 +32,7 @@ func main() {
 	headers := flag.String("headers", "", `e.g. "x-api-key=something,other-key=something-else"`)
 	delay := flag.Int("delay", 1, "Delay between repititions in seconds.")
 	verbose := flag.Bool("verbose", false, "Verbose.")
+	publishMetrics := flag.Bool("publishMetrics", false, "Publish prometheus metrics.")
 	flag.Parse()
 
 	// help
@@ -41,6 +42,10 @@ func main() {
 		help()
 		os.Exit(0)
 	}
+
+	// set request module vars
+
+	request.PublishMetrics = *publishMetrics
 
 	// actions
 

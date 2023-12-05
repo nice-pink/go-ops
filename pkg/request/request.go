@@ -7,7 +7,20 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/nice-pink/go-ops/pkg/metric"
 )
+
+var (
+	PublishMetrics bool = false
+)
+
+func SetupMetrics(port int) {
+	fmt.Println("Publish metrics about auto-healing.")
+	go func() {
+		metric.Listen(port)
+	}()
+}
 
 // get
 
@@ -25,13 +38,17 @@ func Get(url string, verbose bool) (*http.Response, error) {
 		duration := time.Now().Sub(start)
 		fmt.Print(duration, " - ", url, " ")
 
-		if resp.StatusCode == 200 {
-			fmt.Println("✅")
+		if resp.StatusCode < 300 {
+			fmt.Println("✅ Status code:", resp.StatusCode)
 		} else if resp.StatusCode < 400 {
-			fmt.Println("⚠️ Status code != 200:", resp.StatusCode)
+			fmt.Println("⤴️ Redirect. Status code:", resp.StatusCode)
 		} else {
-			fmt.Println("🔥 Status code != 200:", resp.StatusCode)
+			fmt.Println("🔥 Error. Status code:", resp.StatusCode)
 		}
+	}
+
+	if PublishMetrics {
+		ResponseMetrics(resp.StatusCode)
 	}
 
 	return resp, nil
@@ -90,16 +107,20 @@ func Post(url string, body string, headers string, verbose bool) (*http.Response
 		duration := time.Now().Sub(start)
 		fmt.Print(duration, " - ", url, " ")
 
-		if resp.StatusCode <= 300 {
+		if resp.StatusCode < 300 {
 			fmt.Println("✅ Status code:", resp.StatusCode)
 		} else if resp.StatusCode < 400 {
-			fmt.Println("⚠️ Status code != 200:", resp.StatusCode)
+			fmt.Println("⤴️ Redirect:", resp.StatusCode)
 		} else {
-			fmt.Println("🔥 Status code != 200:", resp.StatusCode)
+			fmt.Println("🔥 Status code:", resp.StatusCode)
 		}
 
 		body, _ := io.ReadAll(resp.Body)
 		fmt.Println(string(body))
+	}
+
+	if PublishMetrics {
+		ResponseMetrics(resp.StatusCode)
 	}
 
 	return resp, nil
