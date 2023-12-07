@@ -24,10 +24,14 @@ func SetupMetrics(port int) {
 
 // get
 
-func Get(url string, verbose bool) (*http.Response, error) {
+func Get(url string, headers string, verbose bool) (*http.Response, error) {
 	// request, track duration
 	start := time.Now()
-	resp, err := http.Get(url)
+
+	// request
+	request, err := getNewRequest("GET", url, headers, "")
+	client := &http.Client{}
+	resp, err := client.Do(request)
 
 	if err != nil {
 		fmt.Println("Request error", err)
@@ -54,9 +58,9 @@ func Get(url string, verbose bool) (*http.Response, error) {
 	return resp, nil
 }
 
-func RepeatedGet(url string, repititions int, delay int, verbose bool) {
+func RepeatedGet(url string, headers string, repititions int, delay int, verbose bool) {
 	for i := 0; i < repititions; i++ {
-		Get(url, verbose)
+		Get(url, headers, verbose)
 
 		// delay
 		if i < repititions-1 {
@@ -85,24 +89,16 @@ func Post(url string, body string, headers string, verbose bool) (*http.Response
 		body = string(data)
 	}
 
-	request, err := http.NewRequest("POST", url, strings.NewReader(body))
-
-	// headers: "x-api-key=something,other-key=something-else"
-	headerList := strings.Split(headers, ",")
-	for _, item := range headerList {
-		item = strings.TrimSpace(item)
-		header := strings.Split(item, "=")
-		request.Header.Add(header[0], header[1])
-	}
-
+	// request
+	request, err := getNewRequest("POST", url, headers, body)
 	client := &http.Client{}
-
 	resp, err := client.Do(request)
 	if err != nil {
 		fmt.Println("Request error", err)
 		return nil, err
 	}
 
+	// handle response
 	if verbose {
 		duration := time.Now().Sub(start)
 		fmt.Print(duration, " - ", url, " ")
@@ -119,9 +115,37 @@ func Post(url string, body string, headers string, verbose bool) (*http.Response
 		fmt.Println(string(body))
 	}
 
+	// publish metrics
 	if PublishMetrics {
 		ResponseMetrics(resp.StatusCode)
 	}
 
 	return resp, nil
+}
+
+// helper
+
+func getNewRequest(method string, url string, headers string, body string) (*http.Request, error) {
+	var request *http.Request
+	var err error
+
+	method = strings.ToUpper(method)
+	// post request
+	if body != "" {
+		request, err = http.NewRequest(method, url, strings.NewReader(body))
+	} else {
+		request, err = http.NewRequest(method, url, nil)
+	}
+
+	// headers: "x-api-key=something,other-key=something-else"
+	if headers != "" {
+		headerList := strings.Split(headers, ",")
+		for _, item := range headerList {
+			item = strings.TrimSpace(item)
+			header := strings.Split(item, "=")
+			request.Header.Add(header[0], header[1])
+		}
+	}
+
+	return request, err
 }

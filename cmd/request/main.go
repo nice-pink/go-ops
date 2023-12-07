@@ -49,21 +49,41 @@ func main() {
 
 	// actions
 
+	// get request
 	if strings.ToUpper(*action) == "GET" {
 		if *url == "" {
 			fmt.Println("Specify -url parameter!")
 			os.Exit(2)
 		}
-		request.RepeatedGet(*url, *repititions+1, *delay, *verbose)
+
+		// repeated get
+		if *repititions > 0 {
+			request.RepeatedGet(*url, *headers, *repititions+1, *delay, *verbose)
+			os.Exit(0)
+		}
+
+		// simple get
+		resp, err := request.Get(*url, *headers, *verbose)
+		if err != nil {
+			os.Exit(2)
+		} else if resp != nil && resp.StatusCode >= 400 {
+			os.Exit(2)
+		}
 		os.Exit(0)
 	}
 
+	// post
 	if strings.ToUpper(*action) == "POST" {
 		if *url == "" || *body == "" {
 			fmt.Println("Specify -url parameter!")
 			os.Exit(2)
 		}
-		request.Post(*url, *body, *headers, *verbose)
+		resp, err := request.Post(*url, *body, *headers, *verbose)
+		if err != nil {
+			os.Exit(2)
+		} else if resp != nil && resp.StatusCode >= 400 {
+			os.Exit(2)
+		}
 		os.Exit(0)
 	}
 }
