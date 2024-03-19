@@ -23,6 +23,10 @@ GET request:
 
 POST request:
 > ./request -a post -url http://example.com -headers bla=blub -body @file.json
+
+VALIDATE GET request:
+Validate 5 times that request to http://example.com is redirected and redirect location contains string 'exp'
+> ./request -a get -url http://example.com -noRedirect -validate "redirect-contains:exp" -n 5
 	`)
 }
 
