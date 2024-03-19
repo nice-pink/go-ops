@@ -30,23 +30,12 @@ func Get(url string, headers string, verbose bool, noRedirect bool) (*http.Respo
 	start := time.Now()
 
 	// request
-	request, err := getNewRequest("GET", url, headers, "")
+	request, err := getNewRequest("GET", url, headers, "", verbose)
 	if err != nil {
 		return nil, err
 	}
 
 	return doRequest(request, url, "get", noRedirect, start, verbose)
-}
-
-func RepeatedGet(url string, headers string, repititions int, delay int, verbose bool, noRedirect bool) {
-	for i := 0; i < repititions; i++ {
-		Get(url, headers, verbose, noRedirect)
-
-		// delay
-		if i < repititions-1 {
-			time.Sleep(time.Duration(delay) * time.Second)
-		}
-	}
 }
 
 // post
@@ -70,7 +59,7 @@ func Post(url string, body string, headers string, verbose bool, noRedirect bool
 	}
 
 	// request
-	request, err := getNewRequest("POST", url, headers, body)
+	request, err := getNewRequest("POST", url, headers, body, verbose)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +69,7 @@ func Post(url string, body string, headers string, verbose bool, noRedirect bool
 
 // helper
 
-func getNewRequest(method string, url string, headers string, body string) (*http.Request, error) {
+func getNewRequest(method string, url string, headers string, body string, verbose bool) (*http.Request, error) {
 	var request *http.Request
 	var err error
 
@@ -102,6 +91,10 @@ func getNewRequest(method string, url string, headers string, body string) (*htt
 		}
 	}
 
+	if verbose {
+		printMyIP()
+	}
+
 	return request, err
 }
 
@@ -120,10 +113,12 @@ func doRequest(request *http.Request, url string, method string, noRedirect bool
 		host, _ := resp.Location()
 		fmt.Println(host)
 		// return resp, nil
+		err = nil
 	} else if err != nil {
 		fmt.Println("❌ Request error", err)
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	// handle response
 	if verbose {
@@ -151,4 +146,15 @@ func doRequest(request *http.Request, url string, method string, noRedirect bool
 	}
 
 	return resp, err
+}
+
+func printMyIP() {
+	resp, err := http.Get("http://ifconfig.me")
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	fmt.Println("My ip:", string(body))
 }
