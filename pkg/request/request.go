@@ -117,8 +117,9 @@ func doRequest(request *http.Request, url string, method string, noRedirect bool
 
 	resp, err := client.Do(request)
 	if resp != nil && resp.StatusCode == http.StatusFound { //status code 302
-		fmt.Println(resp.Location())
-		return resp, nil
+		host, _ := resp.Location()
+		fmt.Println(host)
+		// return resp, nil
 	} else if err != nil {
 		fmt.Println("❌ Request error", err)
 		return nil, err
