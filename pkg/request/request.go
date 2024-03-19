@@ -1,6 +1,7 @@
 package request
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -24,43 +25,22 @@ func SetupMetrics(port int) {
 
 // get
 
-func Get(url string, headers string, verbose bool) (*http.Response, error) {
+func Get(url string, headers string, verbose bool, noRedirect bool) (*http.Response, error) {
 	// request, track duration
 	start := time.Now()
 
 	// request
 	request, err := getNewRequest("GET", url, headers, "")
-	client := &http.Client{}
-	resp, err := client.Do(request)
-
 	if err != nil {
-		fmt.Println("Request error", err)
 		return nil, err
 	}
 
-	if verbose {
-		duration := time.Now().Sub(start)
-		fmt.Print(duration, " - ", url, " ")
-
-		if resp.StatusCode < 300 {
-			fmt.Println("✅ Status code:", resp.StatusCode)
-		} else if resp.StatusCode < 400 {
-			fmt.Println("⤴️ Redirect. Status code:", resp.StatusCode)
-		} else {
-			fmt.Println("🔥 Error. Status code:", resp.StatusCode)
-		}
-	}
-
-	if PublishMetrics {
-		ResponseMetrics(resp.StatusCode)
-	}
-
-	return resp, nil
+	return doRequest(request, url, "get", noRedirect, start, verbose)
 }
 
-func RepeatedGet(url string, headers string, repititions int, delay int, verbose bool) {
+func RepeatedGet(url string, headers string, repititions int, delay int, verbose bool, noRedirect bool) {
 	for i := 0; i < repititions; i++ {
-		Get(url, headers, verbose)
+		Get(url, headers, verbose, noRedirect)
 
 		// delay
 		if i < repititions-1 {
@@ -71,7 +51,7 @@ func RepeatedGet(url string, headers string, repititions int, delay int, verbose
 
 // post
 
-func Post(url string, body string, headers string, verbose bool) (*http.Response, error) {
+func Post(url string, body string, headers string, verbose bool, noRedirect bool) (*http.Response, error) {
 	// request, track duration
 	start := time.Now()
 
@@ -91,36 +71,11 @@ func Post(url string, body string, headers string, verbose bool) (*http.Response
 
 	// request
 	request, err := getNewRequest("POST", url, headers, body)
-	client := &http.Client{}
-	resp, err := client.Do(request)
 	if err != nil {
-		fmt.Println("Request error", err)
 		return nil, err
 	}
 
-	// handle response
-	if verbose {
-		duration := time.Now().Sub(start)
-		fmt.Print(duration, " - ", url, " ")
-
-		if resp.StatusCode < 300 {
-			fmt.Println("✅ Status code:", resp.StatusCode)
-		} else if resp.StatusCode < 400 {
-			fmt.Println("⤴️ Redirect:", resp.StatusCode)
-		} else {
-			fmt.Println("🔥 Status code:", resp.StatusCode)
-		}
-
-		body, _ := io.ReadAll(resp.Body)
-		fmt.Println(string(body))
-	}
-
-	// publish metrics
-	if PublishMetrics {
-		ResponseMetrics(resp.StatusCode)
-	}
-
-	return resp, nil
+	return doRequest(request, url, "post", noRedirect, start, verbose)
 }
 
 // helper
@@ -148,4 +103,51 @@ func getNewRequest(method string, url string, headers string, body string) (*htt
 	}
 
 	return request, err
+}
+
+func doRequest(request *http.Request, url string, method string, noRedirect bool, start time.Time, verbose bool) (*http.Response, error) {
+	// client
+	client := &http.Client{}
+	if noRedirect {
+		// return the error, so client won't attempt redirects
+		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return errors.New("redirect")
+		}
+	}
+
+	resp, err := client.Do(request)
+	if resp != nil && resp.StatusCode == http.StatusFound { //status code 302
+		fmt.Println(resp.Location())
+		return resp, nil
+	} else if err != nil {
+		fmt.Println("❌ Request error", err)
+		return nil, err
+	}
+
+	// handle response
+	if verbose {
+		duration := time.Since(start)
+		fmt.Print(duration, " - ", url, " ")
+
+		if resp.StatusCode < 300 {
+			fmt.Println("✅ Status code:", resp.StatusCode)
+		} else if resp.StatusCode < 400 {
+			fmt.Println("⤴️ Redirect:", resp.StatusCode)
+		} else {
+			fmt.Println("🔥 Status code:", resp.StatusCode)
+		}
+
+		// print body if post
+		if strings.ToLower(method) == "post" {
+			body, _ := io.ReadAll(resp.Body)
+			fmt.Println(string(body))
+		}
+	}
+
+	// publish metrics
+	if PublishMetrics {
+		ResponseMetrics(resp.StatusCode)
+	}
+
+	return resp, err
 }

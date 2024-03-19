@@ -1,8 +1,12 @@
 #!/bin/bash
 
 mkdir -p bin/
-rm -rf bin/*
 
-./build request
-
-cd ..
+for d in cmd/*/ ; do
+    [ -L "${d%/}" ] && continue
+    echo "build $d"
+    cd $d
+    go build -o ../../bin
+    cd ../..
+    echo "done!"
+done
