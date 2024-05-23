@@ -31,7 +31,7 @@ Validate 5 times that request to http://example.com is redirected and redirect l
 }
 
 func main() {
-	action := flag.String("a", "", "Action. Type '-action help' if needed!")
+	action := flag.String("a", "get", "Action. Type '-action help' if needed!")
 	url := flag.String("url", "", "Url to request.")
 	loops := flag.Int("n", 1, "Loops.")
 	body := flag.String("body", "", "Json body as string. Or read from file if starts with @.")
@@ -59,10 +59,11 @@ func main() {
 	// user agent
 
 	if *userAgent != "" {
+		userAgent := "user-agent=" + *userAgent
 		if *headers == "" {
-			*headers = *userAgent
+			*headers = userAgent
 		} else {
-			*headers += ",user-agent=" + *userAgent
+			*headers += "," + userAgent
 		}
 	}
 
