@@ -36,6 +36,7 @@ func main() {
 	loops := flag.Int("n", 1, "Loops.")
 	body := flag.String("body", "", "Json body as string. Or read from file if starts with @.")
 	headers := flag.String("headers", "", `e.g. "x-api-key=something,other-key=something-else"`)
+	userAgent := flag.String("userAgent", "", "go-ops super user")
 	noRedirect := flag.Bool("noRedirect", false, "Don't follow redirects.")
 	validate := flag.String("validate", "", "Validate e.g. [body-contains:hello, redirect-contains:dev, ...]")
 	delay := flag.Int("delay", 1, "Delay between repititions in seconds.")
@@ -54,6 +55,16 @@ func main() {
 	// set request module vars
 
 	request.PublishMetrics = *publishMetrics
+
+	// user agent
+
+	if *userAgent != "" {
+		if *headers == "" {
+			*headers = *userAgent
+		} else {
+			*headers += ",user-agent=" + *userAgent
+		}
+	}
 
 	// actions
 
