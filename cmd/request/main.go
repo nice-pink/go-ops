@@ -27,6 +27,10 @@ POST request:
 VALIDATE GET request:
 Validate 5 times that request to http://example.com is redirected and redirect location contains string 'exp'.
 > ./request -a get -url http://example.com -noRedirect -validate "redirect-contains:exp" -n 5
+
+VALIDATE GET request:
+Validate 5 times that request to http://example.com is redirected and redirect location always the same.
+> ./request -a get -url http://example.com -noRedirect -validate "multi-redirects-equal" -n 5
 	`)
 }
 
@@ -38,7 +42,7 @@ func main() {
 	headers := flag.String("headers", "", `e.g. "x-api-key=something,other-key=something-else"`)
 	userAgent := flag.String("userAgent", "", "go-ops super user")
 	noRedirect := flag.Bool("noRedirect", false, "Don't follow redirects.")
-	validate := flag.String("validate", "", "Validate e.g. [body-contains:hello, redirect-contains:dev, ...]")
+	validate := flag.String("validate", "", "Validate e.g. [body-contains:hello, redirect-contains:dev, multi-redirects-equal, ...]")
 	delay := flag.Int("delay", 1, "Delay between repititions in seconds.")
 	verbose := flag.Bool("verbose", false, "Verbose.")
 	publishMetrics := flag.Bool("publishMetrics", false, "Publish prometheus metrics.")

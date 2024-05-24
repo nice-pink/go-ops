@@ -8,8 +8,13 @@ import (
 )
 
 const (
-	RedirectContains string = "redirect-contains:"
-	BodyContains     string = "body-contains:"
+	RedirectContains    string = "redirect-contains:"
+	MultiRedirectsEqual string = "multi-redirects-equal"
+	BodyContains        string = "body-contains:"
+)
+
+var (
+	compareable string = ""
 )
 
 func Validate(resp *http.Response, validate string) bool {
@@ -19,17 +24,9 @@ func Validate(resp *http.Response, validate string) bool {
 	if strings.HasPrefix(validate, RedirectContains) {
 		// redirect contains string
 		short, _ := strings.CutPrefix(validate, RedirectContains)
-		loc, err := resp.Location()
-		if loc == nil || err != nil {
-			isValid = false
+		if !isRedirectedTo(resp, short) {
 			fmt.Println("❌ Is redirected. Status:", resp.StatusCode, "and does not contain", short)
-		} else {
-			isValid = strings.Contains(resp.Header.Get("Location"), short)
-			if !isValid {
-				fmt.Println("❌ Is redirected. Status:", resp.StatusCode, "and does not contain", short)
-			}
 		}
-
 	} else if strings.HasPrefix(validate, BodyContains) {
 		// body contains
 		short, _ := strings.CutPrefix(validate, RedirectContains)
@@ -47,11 +44,40 @@ func Validate(resp *http.Response, validate string) bool {
 		if !isValid {
 			fmt.Println("❌ Body does not contain:", short)
 		}
+	} else if validate == MultiRedirectsEqual {
+		if !isRedirectedTo(resp, compareable) {
+			isValid = false
+		} else if compareable == "" {
+			// save for next try
+			compareable = resp.Header.Get("Location")
+		}
 	}
 
 	if isValid {
 		fmt.Println(" ✅")
+	} else {
+		fmt.Println(" 💥")
 	}
 
 	return isValid
+}
+
+func isRedirectedTo(resp *http.Response, redirectContains string) bool {
+	loc, err := resp.Location()
+	if loc == nil || err != nil {
+		// not redirected
+		return false
+	}
+	if redirectContains == "" {
+		return true
+	}
+	// check if redirect contains substring
+	if !strings.Contains(resp.Header.Get("Location"), redirectContains) {
+		fmt.Println()
+		fmt.Println()
+		fmt.Println(resp.Header.Get("Location"), "DOES NOT CONTAIN:", redirectContains)
+		fmt.Println()
+		return false
+	}
+	return true
 }
