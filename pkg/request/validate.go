@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -44,12 +45,26 @@ func Validate(resp *http.Response, validate string) bool {
 		if !isValid {
 			fmt.Println("❌ Body does not contain:", short)
 		}
-	} else if validate == MultiRedirectsEqual {
+	} else if strings.HasPrefix(validate, MultiRedirectsEqual) {
 		if !isRedirectedTo(resp, compareable) {
 			isValid = false
 		} else if compareable == "" {
 			// save for next try
-			compareable = resp.Header.Get("Location")
+			arr := strings.Split(validate, ":")
+			location := resp.Header.Get("Location")
+			if len(arr) == 1 {
+				compareable = location
+			} else if len(arr) > 2 {
+				regex := regexp.MustCompile(arr[1])
+				compareable = regex.ReplaceAllString(location, arr[2])
+				fmt.Println()
+				fmt.Println()
+				fmt.Println("Assign comparator:", compareable)
+			} else {
+				fmt.Println("Error: Malformed regex. Needs REGEX:REPLACEMENT. E.g. multi-redirects-equal:(http://)(.*):${1}")
+				return false
+			}
+
 		}
 	}
 

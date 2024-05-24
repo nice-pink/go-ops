@@ -31,6 +31,8 @@ Validate 5 times that request to http://example.com is redirected and redirect l
 VALIDATE GET request:
 Validate 5 times that request to http://example.com is redirected and redirect location always the same.
 > ./request -a get -url http://example.com -noRedirect -validate "multi-redirects-equal" -n 5
+With regex
+> ./request -a get -url http://example.com -noRedirect -validate "multi-redirects-equal:(http://)(.*):\${2}" -n 5
 	`)
 }
 
