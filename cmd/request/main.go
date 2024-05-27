@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nice-pink/go-ops/pkg/helper"
 	"github.com/nice-pink/go-ops/pkg/request"
 )
 
@@ -49,6 +50,9 @@ func main() {
 	verbose := flag.Bool("verbose", false, "Verbose.")
 	publishMetrics := flag.Bool("publishMetrics", false, "Publish prometheus metrics.")
 	flag.Parse()
+
+	// print all
+	helper.LogTags()
 
 	// help
 
