@@ -64,7 +64,6 @@ func Validate(resp *http.Response, validate string) bool {
 				fmt.Println("Error: Malformed regex. Needs REGEX:REPLACEMENT. E.g. multi-redirects-equal:(http://)(.*):${1}")
 				return false
 			}
-
 		}
 	}
 
@@ -91,7 +90,7 @@ func isRedirectedTo(resp *http.Response, redirectContains string) bool {
 		fmt.Println()
 		fmt.Println()
 		fmt.Println(resp.Header.Get("Location"), "DOES NOT CONTAIN:", redirectContains)
-		fmt.Println()
+		// fmt.Println()
 		return false
 	}
 	return true
