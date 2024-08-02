@@ -1,5 +1,5 @@
 # FROM cgr.dev/chainguard/go:latest-dev AS builder
-FROM cgr.dev/chainguard/go:latest as builder
+FROM cgr.dev/chainguard/go:latest-dev as builder
 
 LABEL org.opencontainers.image.authors="raffael@nice.pink"
 LABEL org.opencontainers.image.source="https://github.com/nice-pink/go-ops"
@@ -14,6 +14,8 @@ RUN go mod download
 COPY . .
 
 RUN ./build_all
+
+RUN ls ./bin
 
 ####################################################################################################
 
