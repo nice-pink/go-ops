@@ -91,6 +91,8 @@ func success() {
 	log.Info("All endpoints acked.")
 	// webhook
 	triggerWebhook(WEBHOOK_SUCCESS, WEBHOOK_SUCCESS_BODY)
+	ENDPOINTS = nil
+	ENDPOINTS_ACKED = nil
 	RUNNING = false
 }
 
