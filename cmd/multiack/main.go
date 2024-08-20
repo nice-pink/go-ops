@@ -44,6 +44,7 @@ func main() {
 	http.HandleFunc("/endpoints", postEndpoints)
 	http.HandleFunc("/endpointsJson", postEndpointsJson)
 	http.HandleFunc("/ack", postAck)
+	http.HandleFunc("/health", getHealth)
 
 	// start server, panic on error
 	err := http.ListenAndServe(":8080", nil)
@@ -120,6 +121,10 @@ func triggerWebhook(url string, body string) {
 }
 
 // http
+
+func getHealth(w http.ResponseWriter, r *http.Request) {
+	io.WriteString(w, "OK")
+}
 
 func postAck(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
