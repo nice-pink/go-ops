@@ -3,21 +3,13 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"io"
 	"net/http"
 	"os"
-	"slices"
 	"sort"
 	"strings"
-	"time"
 
+	"github.com/nice-pink/go-ops/pkg/ack_simple"
 	"github.com/nice-pink/goutil/pkg/log"
-)
-
-var (
-	TIMEOUT         time.Duration
-	ENDPOINTS       []string
-	ENDPOINTS_ACKED []string
 )
 
 func main() {
@@ -26,29 +18,39 @@ func main() {
 	jsonKey := flag.String("jsonKey", "", "Key if endpointsJson is used.")
 	method := flag.String("method", "get", "Accepted method.")
 	timeout := flag.Int("timeout", 6, "Timeout for accept")
+	webhookSuccess := flag.String("webhookSuccess", "", "Webhook to trigger on success.")
+	webhookSuccessBody := flag.String("webhookSuccessBody", "", "Webhook body to send on success.")
+	webhookFailed := flag.String("webhookFailed", "", "Webhook to trigger on success.")
+	webhookFailedBody := flag.String("webhookFailedBody", "", "Webhook body to send on success.")
 	flag.Parse()
 
+	// webhooks
+	ack_simple.WEBHOOK_SUCCESS = *webhookSuccess
+	ack_simple.WEBHOOK_SUCCESS_BODY = *webhookSuccessBody
+	ack_simple.WEBHOOK_FAILED = *webhookFailed
+	ack_simple.WEBHOOK_FAILED_BODY = *webhookFailedBody
+
 	// start general server timeout
-	startTimeoutTimer(*timeout)
+	ack_simple.StartTimeoutTimer(*timeout)
 
 	// extract endpoints
 	getEndpoints(*endpoints, *endpointsJson, *jsonKey)
 
-	for _, e := range ENDPOINTS {
+	for _, e := range ack_simple.ENDPOINTS {
 		if strings.ToLower(*method) == "get" {
 			log.Info("endpoint listening. get:", e)
-			http.HandleFunc("/"+e, handleGet)
+			http.HandleFunc("/"+e, ack_simple.HandleGet)
 		} else if strings.ToLower(*method) == "post" {
 			log.Info("endpoint listening. post:", e)
-			http.HandleFunc("/"+e, handlePost)
+			http.HandleFunc("/"+e, ack_simple.HandlePost)
 		}
 	}
 
 	s := &http.Server{
 		Addr:           ":8080",
-		ReadTimeout:    TIMEOUT,
-		WriteTimeout:   TIMEOUT,
-		IdleTimeout:    TIMEOUT,
+		ReadTimeout:    ack_simple.TIMEOUT,
+		WriteTimeout:   ack_simple.TIMEOUT,
+		IdleTimeout:    ack_simple.TIMEOUT,
 		MaxHeaderBytes: 1 << 20,
 	}
 
@@ -65,22 +67,10 @@ func main() {
 
 // helper
 
-func startTimeoutTimer(timeout int) {
-	TIMEOUT = time.Duration(timeout) * time.Second
-	if TIMEOUT > 0 {
-		timer := time.NewTimer(TIMEOUT)
-		go func() {
-			<-timer.C
-			log.Error("Timeout!")
-			os.Exit(2)
-		}()
-	}
-}
-
 func getEndpoints(endpoints, endpointsJson, jsonKey string) {
 	if endpoints != "" {
-		log.Info("Get endpoints from -endpoints parameter")
-		ENDPOINTS = strings.Split(endpoints, ",")
+		ack_simple.GetEndpoints(endpoints)
+		return
 	} else {
 		log.Info("Get endpoints from json array -endpointsJson, with key", jsonKey)
 		var array []map[string]string
@@ -89,54 +79,15 @@ func getEndpoints(endpoints, endpointsJson, jsonKey string) {
 			log.Err(err, "parse ")
 		}
 		for _, item := range array {
-			ENDPOINTS = append(ENDPOINTS, item[jsonKey])
+			ack_simple.ENDPOINTS = append(ack_simple.ENDPOINTS, item[jsonKey])
 		}
 	}
-	sort.Strings(ENDPOINTS)
-	log.Info(ENDPOINTS)
+	sort.Strings(ack_simple.ENDPOINTS)
+	log.Info(ack_simple.ENDPOINTS)
 }
 
-// http
-
-func handleGet(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	ackEndpoint(r.URL.Path)
-
-	io.WriteString(w, "OK")
-}
-
-func handlePost(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	io.WriteString(w, "OK")
-}
-
-// ack
-
-func ackEndpoint(e string) bool {
-	ack := strings.TrimPrefix(e, "/")
-	for _, endpoint := range ENDPOINTS_ACKED {
-		if ack == endpoint {
-			return true
-		}
-	}
-
-	log.Info("received request from:", ack)
-	ENDPOINTS_ACKED = append(ENDPOINTS_ACKED, ack)
-	sort.Strings(ENDPOINTS_ACKED)
-
-	if allAcked() {
-		log.Info("All endpoints acked.")
-		os.Exit(0)
-	}
-	return true
-}
-
-func allAcked() bool {
-	return slices.Equal[[]string](ENDPOINTS, ENDPOINTS_ACKED)
-}
+// test
+// terminal 1:
+// nc -l 8888
+// terminal 2:
+// bin/multiacksimple -timeout 3600 -endpoints hello,bello -webhookSuccess http://localhost:8888/ -webhookSuccessBody '{"key":"value"}'
