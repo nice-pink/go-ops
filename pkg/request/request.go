@@ -149,7 +149,12 @@ func doRequest(request *http.Request, url string, method string, noRedirect bool
 }
 
 func printMyIP() {
-	resp, err := http.Get("http://ifconfig.me")
+	// http://ifconfig.me/ip
+	req, _ := http.NewRequest(http.MethodGet, "http://checkip.amazonaws.com/", nil)
+	req.Header.Add("content-type", "application/x-www-form-urlencoded")
+
+	client := http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return
 	}
