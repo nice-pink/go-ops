@@ -1,5 +1,4 @@
-# FROM cgr.dev/chainguard/go:latest-dev AS builder
-FROM cgr.dev/chainguard/go:latest-dev as builder
+FROM cgr.dev/chainguard/go:latest-dev AS builder
 
 LABEL org.opencontainers.image.authors="raffael@nice.pink"
 LABEL org.opencontainers.image.source="https://github.com/nice-pink/go-ops"

@@ -13,6 +13,8 @@ github.com/nice-pink/goutil v0.0.34 h1:/EBuTz8nDqdFEbuW1QaFG1Iou/tvHLeSF2IqSi9NP
 github.com/nice-pink/goutil v0.0.34/go.mod h1:9YMyl3vf6t4AJ6tlAHr2OKgunTG2DocOQqSDbKGnFe8=
 github.com/nice-pink/goutil v0.0.37 h1:RDxr+e0Ram8G+3AggPKFy8doXDQUmTQKj0QYDe7sgvo=
 github.com/nice-pink/goutil v0.0.37/go.mod h1:9YMyl3vf6t4AJ6tlAHr2OKgunTG2DocOQqSDbKGnFe8=
+github.com/nice-pink/goutil v0.3.7 h1:r6ve1othG5E17O05rF1gbbyCUBcAwaUB4rDDMmXETaM=
+github.com/nice-pink/goutil v0.3.7/go.mod h1:9YMyl3vf6t4AJ6tlAHr2OKgunTG2DocOQqSDbKGnFe8=
 github.com/prometheus/client_golang v1.17.0 h1:rl2sfwZMtSthVU752MqfjQozy7blglC+1SOtjMAMh+Q=
 github.com/prometheus/client_golang v1.17.0/go.mod h1:VeL+gMmOAxkS2IqfCq0ZmHSL+LjWfWDUmp1mBz9JgUY=
 github.com/prometheus/client_model v0.4.1-0.20230718164431-9a2bf3000d16 h1:v7DLqVdK4VrYkVD5diGdl4sxJurKJEMnODWRJlxV9oM=

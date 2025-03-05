@@ -3,4 +3,4 @@
 # e.g. request
 target=$1
 
-docker-build-push -i go-ops -p nicepink -r docker -t $target
+docker-build-push -i go-ops -p nicepink -r docker -t $target # -v v0.0.1
