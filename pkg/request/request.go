@@ -25,7 +25,7 @@ func SetupMetrics(port int) {
 
 // get
 
-func Get(url string, headers string, verbose bool, noRedirect bool) (*http.Response, error) {
+func Get(url, headers string, verbose, noRedirect bool, retries int) (*http.Response, error) {
 	// request, track duration
 	start := time.Now()
 
@@ -35,12 +35,12 @@ func Get(url string, headers string, verbose bool, noRedirect bool) (*http.Respo
 		return nil, err
 	}
 
-	return doRequest(request, url, "get", noRedirect, start, verbose)
+	return doRequest(request, url, "get", noRedirect, start, verbose, retries)
 }
 
 // post
 
-func Post(url string, body string, headers string, verbose bool, noRedirect bool) (*http.Response, error) {
+func Post(url, body, headers string, verbose, noRedirect bool, retries int) (*http.Response, error) {
 	// request, track duration
 	start := time.Now()
 
@@ -64,7 +64,7 @@ func Post(url string, body string, headers string, verbose bool, noRedirect bool
 		return nil, err
 	}
 
-	return doRequest(request, url, "post", noRedirect, start, verbose)
+	return doRequest(request, url, "post", noRedirect, start, verbose, retries)
 }
 
 // helper
@@ -98,7 +98,7 @@ func getNewRequest(method string, url string, headers string, body string, verbo
 	return request, err
 }
 
-func doRequest(request *http.Request, url string, method string, noRedirect bool, start time.Time, verbose bool) (*http.Response, error) {
+func doRequest(request *http.Request, url, method string, noRedirect bool, start time.Time, verbose bool, retries int) (*http.Response, error) {
 	// client
 	client := &http.Client{}
 	if noRedirect {
@@ -119,6 +119,12 @@ func doRequest(request *http.Request, url string, method string, noRedirect bool
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if retries > 0 {
+		if resp.StatusCode >= 400 {
+			return doRequest(request, url, method, noRedirect, start, verbose, retries-1)
+		}
+	}
 
 	// handle response
 	if verbose {

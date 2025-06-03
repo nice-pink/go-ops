@@ -49,6 +49,7 @@ func main() {
 	delay := flag.Int("delay", 1, "Delay between repititions in seconds.")
 	verbose := flag.Bool("verbose", false, "Verbose.")
 	publishMetrics := flag.Bool("publishMetrics", false, "Publish prometheus metrics.")
+	retries := flag.Int("retries", 0, "Retries.")
 	flag.Parse()
 
 	// print all
@@ -79,19 +80,25 @@ func main() {
 
 	// actions
 
-	for i := 0; i < *loops; i++ {
+	handle(*action, *url, *headers, *body, *validate, *verbose, *noRedirect, *loops, *retries, *delay)
+
+	os.Exit(0)
+}
+
+func handle(action, url, headers, body, validate string, verbose, noRedirect bool, loops, retries, delay int) {
+	for i := 0; i < loops; i++ {
 		var resp *http.Response
 		var err error
 
 		// get request
-		if strings.ToUpper(*action) == "GET" {
-			if *url == "" {
+		if strings.ToUpper(action) == "GET" {
+			if url == "" {
 				fmt.Println("Specify -url parameter!")
 				os.Exit(2)
 			}
 
 			// simple get
-			resp, err = request.Get(*url, *headers, *verbose, *noRedirect)
+			resp, err = request.Get(url, headers, verbose, noRedirect, retries)
 			if err != nil {
 				os.Exit(2)
 			} else if resp != nil && resp.StatusCode >= 400 {
@@ -100,12 +107,12 @@ func main() {
 		}
 
 		// post
-		if strings.ToUpper(*action) == "POST" {
-			if *url == "" || *body == "" {
+		if strings.ToUpper(action) == "POST" {
+			if url == "" || body == "" {
 				fmt.Println("Specify -url parameter!")
 				os.Exit(2)
 			}
-			resp, err = request.Post(*url, *body, *headers, *verbose, *noRedirect)
+			resp, err = request.Post(url, body, headers, verbose, noRedirect, retries)
 			if err != nil {
 				os.Exit(2)
 			} else if resp != nil && resp.StatusCode >= 400 {
@@ -114,17 +121,15 @@ func main() {
 
 		}
 
-		if *validate != "" {
-			if !request.Validate(resp, *validate) {
+		if validate != "" {
+			if !request.Validate(resp, validate) {
 				os.Exit(2)
 			}
 		}
 
 		// delay
-		if i < *loops-1 {
-			time.Sleep(time.Duration(*delay) * time.Second)
+		if i < loops-1 {
+			time.Sleep(time.Duration(delay) * time.Second)
 		}
 	}
-
-	os.Exit(0)
 }
